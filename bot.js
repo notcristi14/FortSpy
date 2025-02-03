@@ -32,7 +32,7 @@ const rest = new REST({ version: '10' }).setToken(BOT_TOKEN);
   }
 })();
 
-const checkPlayerInfo() = async => {
+const checkPlayerInfo = async () => {
   // API URL for Fortnite stats (using your Fortnite API key)
     const url = `https://fortnite-api.com/v1/stats?username=${username}&apiKey=${process.env.FORTNITE_API_KEY}`;
 
@@ -91,7 +91,7 @@ client.on('interactionCreate', async (interaction) => {
   if (commandName === 'lookup-user') {
     const username = interaction.options.getString('username');
     const infoMessage = await checkPlayerInfo();
-    await interaction.reply(checkPlayerInfo);
+    await interaction.reply({ embeds: [await checkPlayerInfo()] });
   }
 });
 
