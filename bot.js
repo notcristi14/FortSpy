@@ -1,12 +1,9 @@
 require('dotenv').config(); // Load environment variables from the .env file
-const { Client, GatewayIntentBits, SlashCommandBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, REST, Routes } = require('discord.js');
+const express = require('express');
 const axios = require('axios'); // For making API requests
 
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-  ],
-});
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 // Specify the guild ID directly in the code
 const GUILD_ID = 'YOUR_GUILD_ID'; // Replace with your actual guild ID
@@ -14,44 +11,29 @@ const GUILD_ID = 'YOUR_GUILD_ID'; // Replace with your actual guild ID
 client.once('ready', async () => {
   console.log('Fortnite Bot is online!');
   
-  // Ensure that the bot is connected and has access to the guild
-  const guild = client.guilds.cache.get(GUILD_ID);
+  const commands = [
+  {
+    name: 'lookup-user',
+    description: 'Lookup an players information by their username or Account ID',
+  },
+];
 
-  if (!guild) {
-    console.log('Guild not found!');
-    return;
-  }
+const rest = new REST({ version: '10' }).setToken(BOT_TOKEN);
 
-  console.log(`Guild ${guild.name} has been found!`);  // Log the name of the guild if found
-
-  // Define slash command with username option
-  const fortniteCommand = new SlashCommandBuilder()
-    .setName('fortnite')
-    .setDescription('Get Fortnite player information')
-    .addStringOption(option => 
-      option.setName('username')
-        .setDescription('Enter the Fortnite username')
-        .setRequired(true));
-
-  // Register slash command
+(async () => {
   try {
-    await guild.commands.create(fortniteCommand);
-    console.log('Slash command has been registered!');
+    console.log('Started refreshing application (/) commands.');
+    await rest.put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), {
+      body: commands,
+    });
+    console.log('Successfully reloaded application (/) commands.');
   } catch (error) {
-    console.error('Error registering commands:', error);
+    console.error(error);
   }
-});
+})();
 
-// Slash command handler
-client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isCommand()) return;
-
-  const { commandName } = interaction;
-
-  if (commandName === 'fortnite') {
-    const username = interaction.options.getString('username');
-    
-    // API URL for Fortnite stats (using your Fortnite API key)
+const checkPlayerInfo() = async => {
+  // API URL for Fortnite stats (using your Fortnite API key)
     const url = `https://fortnite-api.com/v1/stats?username=${username}&apiKey=${process.env.FORTNITE_API_KEY}`;
 
     try {
@@ -98,6 +80,32 @@ client.on('interactionCreate', async (interaction) => {
     }
   }
 });
+
+  
+// Handle slash commands
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isCommand()) return;
+
+  const { commandName } = interaction;
+
+  if (commandName === 'lookup-user') {
+    const username = interaction.options.getString('username');
+    const infoMessage = await checkPlayerInfo();
+    await interaction.reply(checkPlayerInfo);
+  }
+});
+
+
+  // Register slash command
+  try {
+    await guild.commands.create(fortniteCommand);
+    console.log('Slash command has been registered!');
+  } catch (error) {
+    console.error('Error registering commands:', error);
+  }
+});
+    
+    
 
 // Log in to the bot
 client.login(process.env.DISCORD_BOT_TOKEN); // Fetch bot token from the .env file
